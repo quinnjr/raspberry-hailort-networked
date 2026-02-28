@@ -1,0 +1,44 @@
+syntax = "proto3";
+package inference;
+
+service InferenceService {
+    rpc LoadModel    (LoadModelRequest)    returns (LoadModelResponse);
+    rpc UnloadModel  (UnloadModelRequest)  returns (UnloadModelResponse);
+    rpc RunInference (RunInferenceRequest) returns (RunInferenceResponse);
+    rpc GetStatus    (GetStatusRequest)    returns (GetStatusResponse);
+}
+
+message LoadModelRequest {
+    bytes  hef_data   = 1;
+    string model_name = 2;
+}
+message LoadModelResponse {
+    bool   success      = 1;
+    string error_msg    = 2;
+    uint32 input_count  = 3;
+    uint32 output_count = 4;
+}
+
+message UnloadModelRequest  { string model_name = 1; }
+message UnloadModelResponse { bool success = 1; string error_msg = 2; }
+
+message RunInferenceRequest {
+    string model_name            = 1;
+    bytes  input_data            = 2;
+    uint32 expected_output_size  = 3;
+}
+message RunInferenceResponse {
+    bool   success     = 1;
+    string error_msg   = 2;
+    bytes  output_data = 3;
+    uint32 latency_ms  = 4;
+}
+
+message GetStatusRequest {}
+message GetStatusResponse {
+    string          worker_id        = 1;
+    string          hostname         = 2;
+    repeated string loaded_models    = 3;
+    uint64          total_inferences = 4;
+    bool            hardware_active  = 5;
+}
