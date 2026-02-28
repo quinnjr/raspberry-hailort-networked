@@ -460,8 +460,8 @@ dependencies = [
 
 [[package]]
 name = "hailort-sys"
-version = "0.1.1"
-source = "git+https://github.com/quinnjr/hailort-sys.git#95d06b67107d2e45a9e2a096f63e3aa89ef6efb2"
+version = "0.1.2"
+source = "git+https://github.com/quinnjr/hailort-sys.git#1e50907373061b60c81f5fc7bcefa1f7f27ecdf4"
 dependencies = [
  "pkg-config",
 ]
@@ -1022,7 +1022,7 @@ dependencies = [
 ]
 
 [[package]]
-name = "raspberry-haliort-networked"
+name = "raspberry-hailort-networked"
 version = "0.1.0"
 dependencies = [
  "anyhow",

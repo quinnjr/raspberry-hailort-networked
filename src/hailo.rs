@@ -131,7 +131,7 @@ impl HailoBackend {
                 "HEF has multiple network groups; using the first"
             );
             for &ng in &network_groups[1..ng_count] {
-                unsafe { hailo_release_network_group(ng) };
+                unsafe { hailo_shutdown_network_group(ng) };
             }
         }
         let network_group = network_groups[0];
@@ -148,7 +148,7 @@ impl HailoBackend {
             )
         };
         if let Err(e) = check_status(status, "hailo_create_input_vstreams") {
-            unsafe { hailo_release_network_group(network_group) };
+            unsafe { hailo_shutdown_network_group(network_group) };
             return Err(e);
         }
 
@@ -164,10 +164,10 @@ impl HailoBackend {
             )
         };
         if let Err(e) = check_status(status, "hailo_create_output_vstreams") {
-            for &vs in &raw_inputs {
-                unsafe { hailo_release_input_vstream(vs) };
+            unsafe {
+                hailo_release_input_vstreams(raw_inputs.as_ptr(), raw_inputs.len());
+                hailo_shutdown_network_group(network_group);
             }
-            unsafe { hailo_release_network_group(network_group) };
             return Err(e);
         }
 
@@ -223,13 +223,13 @@ impl HailoBackend {
                 let end = if i + 1 == n { input_data.len() } else { begin + chunk_size };
                 let chunk = &input_data[begin..end];
                 let status = unsafe {
-                    hailo_input_vstream_write(
+                    hailo_vstream_write_raw_buffer(
                         vstream,
                         chunk.as_ptr() as *const _,
                         chunk.len(),
                     )
                 };
-                check_status(status, "hailo_input_vstream_write")?;
+                check_status(status, "hailo_vstream_write_raw_buffer")?;
             }
         }
 
@@ -243,13 +243,13 @@ impl HailoBackend {
                 let end = if i + 1 == n { out_size } else { begin + chunk_size };
                 let chunk = &mut output[begin..end];
                 let status = unsafe {
-                    hailo_output_vstream_read(
+                    hailo_vstream_read_raw_buffer(
                         vstream,
                         chunk.as_mut_ptr() as *mut _,
                         chunk.len(),
                     )
                 };
-                check_status(status, "hailo_output_vstream_read")?;
+                check_status(status, "hailo_vstream_read_raw_buffer")?;
             }
         }
 
@@ -293,13 +293,23 @@ impl Drop for HailoBackend {
 
 /// Releases vstreams and the network group in the correct order.
 fn release_model(model: LoadedModel) {
-    for vstream in model.input_vstreams {
-        unsafe { hailo_release_input_vstream(vstream) };
+    if !model.input_vstreams.is_empty() {
+        unsafe {
+            hailo_release_input_vstreams(
+                model.input_vstreams.as_ptr(),
+                model.input_vstreams.len(),
+            )
+        };
     }
-    for vstream in model.output_vstreams {
-        unsafe { hailo_release_output_vstream(vstream) };
+    if !model.output_vstreams.is_empty() {
+        unsafe {
+            hailo_release_output_vstreams(
+                model.output_vstreams.as_ptr(),
+                model.output_vstreams.len(),
+            )
+        };
     }
-    unsafe { hailo_release_network_group(model.network_group) };
+    unsafe { hailo_shutdown_network_group(model.network_group) };
 }
 
 /// Queries vstream info from a live HEF handle and builds the param arrays
@@ -323,7 +333,7 @@ fn build_vstream_params(
     let mut count: usize = HAILO_MAX_STREAMS_COUNT;
 
     let status = unsafe {
-        hailo_hef_get_vstream_infos(hef, ptr::null(), infos.as_mut_ptr(), &mut count)
+        hailo_hef_get_all_vstream_infos(hef, ptr::null(), infos.as_mut_ptr(), &mut count)
     };
     check_status(status, "hailo_hef_get_vstream_infos")?;
 
