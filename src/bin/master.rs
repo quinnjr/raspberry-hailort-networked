@@ -8,7 +8,7 @@ use tokio::time::sleep;
 use tonic::transport::Channel;
 use tracing::{info, warn};
 
-use raspberry_haliort_networked::{
+use raspberry_hailort_networked::{
     discovery::{self, DiscoveryEvent, WorkerEndpoint},
     proto::{
         inference_service_client::InferenceServiceClient, GetStatusRequest, LoadModelRequest,

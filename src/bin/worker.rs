@@ -8,7 +8,7 @@ use tonic::{transport::Server, Request, Response, Status};
 use tracing::info;
 use uuid::Uuid;
 
-use raspberry_haliort_networked::{
+use raspberry_hailort_networked::{
     discovery,
     hailo::HailoBackend,
     proto::{
